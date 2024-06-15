@@ -10,13 +10,14 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 
 class DatabaseCreator:
-    def __init__(self, data_path: str, chroma_path: str):
+    def __init__(self, data_path: str, chroma_instance: Chroma):
         self.data_path = data_path
-        self.chroma_path = chroma_path
+        self.chroma_instance = chroma_instance
         load_dotenv()
         openai.api_key = os.environ['OPENAI_API_KEY']
         print("key is-----------------")
         print( os.environ['OPENAI_API_KEY'])
+       
 
     def generate_data_store(self):
         documents = self.load_documents()
@@ -38,7 +39,7 @@ class DatabaseCreator:
 
     def split_text(self, documents: list[Document]):
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=3000,
+            chunk_size=300,
             chunk_overlap=100,
             length_function=len,
             add_start_index=True,
@@ -53,13 +54,14 @@ class DatabaseCreator:
         return chunks
 
     def save_to_chroma(self, chunks: list[Document]):
-        if os.path.exists(self.chroma_path):
-            shutil.rmtree(self.chroma_path)
+        # if os.path.exists(self.chroma_path):
+        #     shutil.rmtree(self.chroma_path)
 
-        db = Chroma.from_documents(
-            chunks, OpenAIEmbeddings(), persist_directory=self.chroma_path
-        )
-        db.persist()
-        db._client.stop()
-        db = None
-        print(f"Saved {len(chunks)} chunks to {self.chroma_path}.")
+        # db = Chroma.from_documents(
+        #     chunks, OpenAIEmbeddings(), persist_directory=self.chroma_path
+        # )
+        
+        self.chroma_instance.add_documents(chunks)
+        self.chroma_instance.persist()
+
+        print(f"Saved {len(chunks)} chunks")

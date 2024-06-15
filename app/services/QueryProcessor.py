@@ -26,23 +26,30 @@ Answer the question based on the above context: {question}
 load_dotenv()
 
 class QueryProcessor:
-    def __init__(self):
+    def __init__(self, chroma_instance: Chroma):
         print("init queryprocessor")
         self.embedding_function = OpenAIEmbeddings()
-        self.db = Chroma(persist_directory=CHROMA_PATH, embedding_function=self.embedding_function)
-        # self.model = ChatOpenAI()
-        #openai.api_key = os.environ['OPENAI_API_KEY']
+        self.db = chroma_instance
+        #Chroma(persist_directory=CHROMA_PATH, embedding_function=self.embedding_function)
+        self.model = ChatOpenAI()
+        openai.api_key = os.environ['OPENAI_API_KEY']
 
-    # def process_query(self, query_text: str) -> str:
-    #     results = self.db.similarity_search_with_relevance_scores(query_text, k=3)
-    #     if len(results) == 0 or results[0][1] < 0.7:
-    #         return "Unable to find matching results."
+    def process_query(self, query_text: str) -> str:
+        print("start query-----")
+        print(query_text)
+        results = self.db.similarity_search_with_relevance_scores(query_text, k=3)
+        if len(results) == 0 or results[0][1] < 0.7:
+            return "Unable to find matching results."
 
-    #     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
-    #     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    #     prompt = prompt_template.format(context=context_text, question=query_text)
-
-    #     response_text = self.model.predict(prompt)
-    #     sources = [doc.metadata.get("source", None) for doc, _score in results]
-    #     formatted_response = f"Response: {response_text}\nSources: {sources}"
-    #     return formatted_response
+        context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+        prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+        prompt = prompt_template.format(context=context_text, question=query_text)
+       
+        print("promt----------------------------")
+        print(prompt)
+        response_text = self.model.predict(prompt)
+        sources = [doc.metadata.get("source", None) for doc, _score in results]
+      
+        formatted_response = f"Response: {response_text}\nSources: {sources}"
+        print(formatted_response)
+        return formatted_response
