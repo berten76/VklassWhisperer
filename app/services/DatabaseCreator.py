@@ -1,7 +1,10 @@
 import os
 import shutil
 import time
+from app.lib.constants import OPENAI_API_KEY, WEEK_KEY
+from app.lib.utils import extract_week_from_query
 import openai 
+import re
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -15,24 +18,26 @@ class DatabaseCreator:
         self.chroma_instance = chroma_instance
         load_dotenv()
         openai.api_key = os.environ['OPENAI_API_KEY']
-        print("key is-----------------")
-        print( os.environ['OPENAI_API_KEY'])
-       
+        print(f"key----------{ OPENAI_API_KEY}")
 
     def generate_data_store(self):
         documents = self.load_documents()
         chunks = self.split_text(documents)
         self.save_to_chroma(chunks)
-
+        
+        
     def load_documents(self):
         filenames = os.listdir(self.data_path)
-
         pagesTot = []
         for filename in filenames:
             file_path = os.path.join(self.data_path, filename)
             print("Processing file:", file_path)
             loader = PyPDFLoader(file_path)
             pages = loader.load_and_split()
+            week = extract_week_from_query(filename)
+            print(f"week {week}")
+            for page in pages:
+                page.metadata[WEEK_KEY] = week
             pagesTot += pages
 
         return pagesTot
@@ -65,3 +70,5 @@ class DatabaseCreator:
         self.chroma_instance.persist()
 
         print(f"Saved {len(chunks)} chunks")
+
+

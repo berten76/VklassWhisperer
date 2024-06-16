@@ -1,5 +1,7 @@
 import os
 # import shutil
+from app.lib.constants import OPENAI_API_KEY, WEEK_KEY
+from app.lib.utils import extract_week_from_query
 import openai 
 from dotenv import load_dotenv
 # from langchain_community.vectorstores import Chroma
@@ -14,7 +16,7 @@ from langchain.prompts import ChatPromptTemplate
 
 CHROMA_PATH = "chroma"
 PROMPT_TEMPLATE = """
-Answer the question based only on the following context:
+Answer the question based only on the following context if you dont find the answere say that you cant find the answere:
 
 {context}
 
@@ -30,14 +32,21 @@ class QueryProcessor:
         print("init queryprocessor")
         self.embedding_function = OpenAIEmbeddings()
         self.db = chroma_instance
-        #Chroma(persist_directory=CHROMA_PATH, embedding_function=self.embedding_function)
         self.model = ChatOpenAI()
         openai.api_key = os.environ['OPENAI_API_KEY']
 
     def process_query(self, query_text: str) -> str:
         print("start query-----")
         print(query_text)
-        results = self.db.similarity_search_with_relevance_scores(query_text, k=3)
+        week = extract_week_from_query(query_text)
+
+        if week:
+            filter = {WEEK_KEY: week}
+        else:
+            filter = None
+
+    
+        results = self.db.similarity_search_with_relevance_scores(query_text, k=3, filter=filter)
         if len(results) == 0 or results[0][1] < 0.7:
             return "Unable to find matching results."
 
@@ -45,8 +54,6 @@ class QueryProcessor:
         prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
         prompt = prompt_template.format(context=context_text, question=query_text)
        
-        print("promt----------------------------")
-        print(prompt)
         response_text = self.model.predict(prompt)
         sources = [doc.metadata.get("source", None) for doc, _score in results]
       
