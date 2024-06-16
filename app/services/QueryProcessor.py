@@ -1,6 +1,6 @@
 import os
 # import shutil
-from app.lib.constants import OPENAI_API_KEY, WEEK_KEY
+from app.lib.constants import WEEK_KEY
 from app.lib.utils import extract_week_from_query
 import openai 
 from dotenv import load_dotenv

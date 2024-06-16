@@ -1,7 +1,7 @@
 import os
 import shutil
 import time
-from app.lib.constants import OPENAI_API_KEY, WEEK_KEY
+from app.lib.constants import WEEK_KEY
 from app.lib.utils import extract_week_from_query
 import openai 
 import re
@@ -18,7 +18,6 @@ class DatabaseCreator:
         self.chroma_instance = chroma_instance
         load_dotenv()
         openai.api_key = os.environ['OPENAI_API_KEY']
-        print(f"key----------{ OPENAI_API_KEY}")
 
     def generate_data_store(self):
         documents = self.load_documents()
